@@ -16,4 +16,6 @@ export const router = createBrowserRouter([
       { path: 'training/:trainingId', Component: TrainingSession },
     ],
   },
-]);
+], {
+  basename: '/ai-peilian-role/',
+});
