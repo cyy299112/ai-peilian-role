@@ -186,7 +186,7 @@ const dimensionLabels = ['收益', '风险', '合规', '体验', '效率'];
 const dimensionColors = ['#84cc16', '#f97316', '#38bdf8', '#a78bfa', '#fbbf24'];
 
 // ─── Character Select Screen ────────────────────────────────
-function CharacterSelectScreen({ scenario, config, onStart }: { scenario: ScenarioData; config: SkinConfig; onStart: (costume: number) => void }) {
+function CharacterSelectScreen({ scenario, config, onStart, onClose }: { scenario: ScenarioData; config: SkinConfig; onStart: (costume: number) => void; onClose: () => void }) {
   const [costume, setCostume] = useState(0);
   const ac = scenario.aiCharacter;
 
@@ -195,7 +195,12 @@ function CharacterSelectScreen({ scenario, config, onStart }: { scenario: Scenar
       className="w-full h-full flex flex-col"
       style={{ fontFamily: "'Rajdhani', sans-serif" }}>
       {/* Header */}
-      <div style={{ padding: '20px 32px', borderBottom: `1px solid ${config.panelBorder}`, background: config.panelBg, backdropFilter: 'blur(16px)' }}>
+      <div style={{ padding: '20px 32px', borderBottom: `1px solid ${config.panelBorder}`, background: config.panelBg, backdropFilter: 'blur(16px)', position: 'relative' }}>
+        <button onClick={onClose} style={{ position: 'absolute', top: 16, right: 24, width: 32, height: 32, borderRadius: 8, background: 'rgba(255,255,255,0.06)', border: `1px solid ${config.panelBorder}`, color: config.textSecondary, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, transition: 'all 0.2s' }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(239,68,68,0.15)'; e.currentTarget.style.color = '#ef4444'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.3)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = config.textSecondary; e.currentTarget.style.borderColor = config.panelBorder; }}>
+          ✕
+        </button>
         <div style={{ fontFamily: "'Orbitron', sans-serif", fontSize: 10, color: config.textSecondary, letterSpacing: '0.2em', marginBottom: 4 }}>MISSION BRIEFING · ACT Ⅰ</div>
         <div style={{ color: config.textPrimary, fontWeight: 700, fontSize: 20 }}>{scenario.scriptTitle}</div>
         <div style={{ color: config.textSecondary, fontSize: 12, marginTop: 2 }}>确认角色与任务，准备进入训练场景</div>
@@ -553,10 +558,25 @@ function ResultsScreen({ scores, redLineCount, scenario, config, skin, trainingI
   const [showStars, setShowStars] = useState(0);
   const navigate = useNavigate();
 
+  // 检查是否是LV3完成，解锁LV4
+  const isBuilding3 = trainingId === 'building-3';
+  const isCompleted = finalStars > 0;
+  const [showUnlockMessage, setShowUnlockMessage] = useState(false);
+
   useEffect(() => {
     const t = setTimeout(() => { let i = 0; const iv = setInterval(() => { i++; setShowStars(i); if (i >= finalStars) clearInterval(iv); }, 400); }, 600);
     return () => clearTimeout(t);
   }, [finalStars]);
+
+  // 如果是LV3完成，显示解锁提示并保存状态
+  useEffect(() => {
+    if (isBuilding3 && isCompleted) {
+      // 保存完成状态到 localStorage
+      localStorage.setItem(`${trainingId}-${skin}-completed`, 'true');
+      const t = setTimeout(() => setShowUnlockMessage(true), 2000);
+      return () => clearTimeout(t);
+    }
+  }, [isBuilding3, isCompleted, trainingId, skin]);
 
   const radarData = dimensionLabels.map((label, i) => ({ subject: label, value: scores[i], fullMark: 100 }));
   const xpEarned = Math.round(avg * finalStars * 0.8 + (redLineCount === 0 ? 50 : 0));
@@ -654,6 +674,34 @@ function ResultsScreen({ scores, redLineCount, scenario, config, skin, trainingI
                 <span style={{ fontSize: 10, color: '#22c55e' }}>合规零违规 +50XP</span>
               </div>
             )}
+
+            {/* LV4 解锁提示 */}
+            <AnimatePresence>
+              {showUnlockMessage && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                  style={{
+                    background: `linear-gradient(135deg, rgba(${config.accentRgb},0.2), rgba(${config.accentRgb},0.1))`,
+                    border: `1px solid ${config.accent}`,
+                    borderRadius: 12,
+                    padding: '12px',
+                    textAlign: 'center',
+                  }}
+                >
+                  <div style={{ fontSize: 11, color: config.accent, fontWeight: 700, marginBottom: 4 }}>
+                    🎉 新关卡已解锁！
+                  </div>
+                  <div style={{ fontSize: 10, color: config.textPrimary }}>
+                    LV4 财富塔 已解锁
+                  </div>
+                  <div style={{ fontSize: 9, color: config.textSecondary, marginTop: 4 }}>
+                    高净值客户异议处理训练
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
 
@@ -717,7 +765,7 @@ export default function TrainingSession() {
         <div style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%' }}>
           <AnimatePresence mode="wait">
             {step === 'select' && (
-              <CharacterSelectScreen key="select" scenario={scenario} config={config} onStart={handleStart} />
+              <CharacterSelectScreen key="select" scenario={scenario} config={config} onStart={handleStart} onClose={handleBack} />
             )}
             {step === 'train' && (
               <TrainingScreen key="train" scenario={scenario} config={config} skin={skin} costume={costume} onComplete={handleComplete} onBack={handleBack} />

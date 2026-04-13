@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router';
 import { Bell, Trophy, Star, Zap, ChevronDown, AlertTriangle } from 'lucide-react';
 import type { Skin, SkinConfig } from '../types/game';
 
@@ -14,6 +15,7 @@ const violations = [
 ];
 
 export default function TopStatusBar({ skin, config, onSkinChange }: TopStatusBarProps) {
+  const navigate = useNavigate();
   const [showAlerts, setShowAlerts] = useState(false);
   const [showBadges, setShowBadges] = useState(false);
   const xpPercent = 68;
@@ -63,16 +65,19 @@ export default function TopStatusBar({ skin, config, onSkinChange }: TopStatusBa
         {/* Left: Avatar + Profile */}
         <div className="flex items-center gap-3 shrink-0">
           <div className="relative">
-            <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm"
-              style={{
-                background: `linear-gradient(135deg, ${config.gradientFrom}40, ${config.gradientTo}40)`,
-                border: `2px solid ${config.accent}`,
-                boxShadow: `0 0 12px rgba(${config.accentRgb},0.4)`,
-                color: config.accent,
-                fontFamily: "'Orbitron', sans-serif",
-              }}>
-              陈
-            </div>
+            <button
+            onClick={() => navigate(`/profile?skin=${skin}`)}
+            className="w-10 h-10 rounded-full flex items-center justify-center text-sm transition-transform hover:scale-105"
+            style={{
+              background: `linear-gradient(135deg, ${config.gradientFrom}40, ${config.gradientTo}40)`,
+              border: `2px solid ${config.accent}`,
+              boxShadow: `0 0 12px rgba(${config.accentRgb},0.4)`,
+              color: config.accent,
+              fontFamily: "'Orbitron', sans-serif",
+              cursor: 'pointer',
+            }}>
+            陈
+          </button>
             <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-[8px]"
               style={{ background: config.accent, color: config.bg }}>
               <span style={{ fontFamily: "'Orbitron', sans-serif" }}>IV</span>
@@ -80,7 +85,13 @@ export default function TopStatusBar({ skin, config, onSkinChange }: TopStatusBa
           </div>
           <div>
             <div className="flex items-center gap-1.5">
-              <span className="top-text text-sm" style={{ fontWeight: 600 }}>陈美琳</span>
+              <button
+                onClick={() => navigate(`/profile?skin=${skin}`)}
+                className="top-text text-sm hover:opacity-80 transition-opacity"
+                style={{ fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+              >
+                陈美琳
+              </button>
               <span className="text-xs px-1.5 py-0.5 rounded skin-badge" style={{ fontSize: 10 }}>资深理财经理</span>
             </div>
             <div className="flex items-center gap-1.5 mt-0.5">

@@ -1,13 +1,36 @@
-import React, { useState } from 'react';
-import { motion } from 'motion/react';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router';
-import { Users, Swords, Play, ChevronRight, Zap, Clock, BarChart2, RefreshCw } from 'lucide-react';
+import { Users, Swords, Play, ChevronRight, Zap, Clock, BarChart2, RefreshCw, X, CheckCircle2, User } from 'lucide-react';
 import type { TaskCard, SkinConfig, Skin } from '../types/game';
 
 interface BottomDockProps {
   taskCards: TaskCard[];
   config: SkinConfig;
   skin: Skin;
+}
+
+const allFinanceCards: TaskCard[] = [
+  { id: 1, type: 'revenue', title: '收益优先卡', tag: '💰 收益最大化', subtitle: '高净值客户资产配置推荐话术', difficulty: 3, xp: 120, duration: '15分钟' },
+  { id: 2, type: 'compliance', title: '合规防守卡', tag: '⚖️ 合规加固', subtitle: '反洗钱可疑交易特征识别演练', difficulty: 2, xp: 80, duration: '10分钟' },
+  { id: 3, type: 'pressure', title: '高压抗压卡', tag: '🔥 极限挑战', subtitle: '极度愤怒客户投诉处理模拟', difficulty: 5, xp: 200, duration: '20分钟' },
+  { id: 4, type: 'revenue', title: '产品推介卡', tag: '💰 营销突破', subtitle: '复杂结构化存款产品介绍演练', difficulty: 3, xp: 100, duration: '12分钟' },
+  { id: 5, type: 'compliance', title: '风险揭示卡', tag: '⚖️ 合规底线', subtitle: '理财产品风险提示规范话术训练', difficulty: 2, xp: 70, duration: '10分钟' },
+  { id: 6, type: 'pressure', title: '情绪急救卡', tag: '🔥 危机应对', subtitle: '客户当场翻脸的紧急处置演练', difficulty: 4, xp: 160, duration: '18分钟' },
+];
+
+const allEnergyCards: TaskCard[] = [
+  { id: 1, type: 'revenue', title: '效率优先卡', tag: '⚡ 收益提升', subtitle: '电力交易竞价策略优化演练', difficulty: 3, xp: 120, duration: '15分钟' },
+  { id: 2, type: 'compliance', title: '安全防守卡', tag: '🛡️ 安全合规', subtitle: '违章操作识别与安全制止演练', difficulty: 2, xp: 80, duration: '10分钟' },
+  { id: 3, type: 'pressure', title: '应急抗压卡', tag: '🚨 极限应急', subtitle: '大面积停电应急调度指挥模拟', difficulty: 5, xp: 200, duration: '20分钟' },
+  { id: 4, type: 'revenue', title: '调度优化卡', tag: '⚡ 效率提升', subtitle: '电网负荷平衡优化决策演练', difficulty: 3, xp: 110, duration: '14分钟' },
+  { id: 5, type: 'compliance', title: '巡检规范卡', tag: '🛡️ 操作标准', subtitle: '变电站设备巡检SOP完整流程训练', difficulty: 2, xp: 75, duration: '10分钟' },
+  { id: 6, type: 'pressure', title: '故障抢修卡', tag: '🚨 紧急处置', subtitle: '主变压器跳闸事故快速响应演练', difficulty: 4, xp: 150, duration: '16分钟' },
+];
+
+function pickRandomCards(pool: TaskCard[], count: number): TaskCard[] {
+  const shuffled = [...pool].sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, count);
 }
 
 const cardStyleMap = {
@@ -219,8 +242,77 @@ function TaskCardComponent({ card, config, skin, index }: TaskCardProps) {
   );
 }
 
-export default function BottomDock({ taskCards, config, skin }: BottomDockProps) {
+// 模拟队友数据
+const mockTeammates = [
+  { id: 1, name: '张志强', level: '资深经理', avatar: '👨‍💼' },
+  { id: 2, name: '李雪梅', level: '金牌顾问', avatar: '👩‍💼' },
+  { id: 3, name: '王建国', level: '中级经理', avatar: '🧑‍💼' },
+  { id: 4, name: '陈晓燕', level: '高级顾问', avatar: '👩‍💻' },
+  { id: 5, name: '刘大伟', level: '资深经理', avatar: '👨‍💻' },
+];
+
+interface Teammate {
+  id: number;
+  name: string;
+  level: string;
+  avatar: string;
+}
+
+export default function BottomDock({ config, skin }: BottomDockProps) {
+  const navigate = useNavigate();
+  const cardPool = skin === 'finance' ? allFinanceCards : allEnergyCards;
+  const [displayCards, setDisplayCards] = useState<TaskCard[]>(() => pickRandomCards(cardPool, 3));
   const [teamCount] = useState(7);
+  const [isMatching, setIsMatching] = useState(false);
+  const [matchProgress, setMatchProgress] = useState(0);
+  const [matchedTeammates, setMatchedTeammates] = useState<Teammate[]>([]);
+  const [showMatchModal, setShowMatchModal] = useState(false);
+  const [matchComplete, setMatchComplete] = useState(false);
+
+  const handleRefreshCards = () => {
+    setDisplayCards(pickRandomCards(cardPool, 3));
+  };
+
+  // 模拟匹配过程
+  useEffect(() => {
+    if (isMatching) {
+      const interval = setInterval(() => {
+        setMatchProgress(prev => {
+          if (prev >= 100) {
+            clearInterval(interval);
+            // 随机选择2个队友
+            const shuffled = [...mockTeammates].sort(() => 0.5 - Math.random());
+            setMatchedTeammates(shuffled.slice(0, 2));
+            setMatchComplete(true);
+            return 100;
+          }
+          return prev + 2;
+        });
+      }, 50);
+      return () => clearInterval(interval);
+    }
+  }, [isMatching]);
+
+  const handleStartTeam = () => {
+    setIsMatching(true);
+    setShowMatchModal(true);
+    setMatchProgress(0);
+    setMatchComplete(false);
+    setMatchedTeammates([]);
+  };
+
+  const handleCloseModal = () => {
+    setShowMatchModal(false);
+    setIsMatching(false);
+    setMatchProgress(0);
+    setMatchComplete(false);
+  };
+
+  const handleStartBattle = () => {
+    // 跳转到组队训练页面
+    handleCloseModal();
+    navigate(`/training/team-battle?skin=${skin}`);
+  };
 
   return (
     <>
@@ -233,7 +325,7 @@ export default function BottomDock({ taskCards, config, skin }: BottomDockProps)
       `}</style>
       <div className="dock-panel w-full shrink-0" style={{ height: 160, fontFamily: "'Rajdhani', sans-serif" }}>
         <div className="h-full flex items-stretch gap-3 px-4 py-3">
-          
+
           {/* Section label */}
           <div className="flex flex-col justify-between shrink-0 w-24">
             <div>
@@ -247,7 +339,7 @@ export default function BottomDock({ taskCards, config, skin }: BottomDockProps)
                 AI 智能推荐 · 今日三练
               </div>
             </div>
-            <button style={{
+            <button onClick={handleRefreshCards} style={{
               display: 'flex',
               alignItems: 'center',
               gap: 4,
@@ -271,8 +363,8 @@ export default function BottomDock({ taskCards, config, skin }: BottomDockProps)
 
           {/* Task cards */}
           <div className="flex gap-3 flex-1">
-            {taskCards.map((card, i) => (
-              <TaskCardComponent key={card.id} card={card} config={config} skin={skin} index={i} />
+            {displayCards.map((card, i) => (
+              <TaskCardComponent key={card.id + '-' + i} card={card} config={config} skin={skin} index={i} />
             ))}
           </div>
 
@@ -304,6 +396,8 @@ export default function BottomDock({ taskCards, config, skin }: BottomDockProps)
               <motion.button
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
+                onClick={handleStartTeam}
+                disabled={isMatching}
                 style={{
                   background: `linear-gradient(135deg, ${config.gradientFrom}, ${config.gradientTo})`,
                   border: 'none',
@@ -312,17 +406,18 @@ export default function BottomDock({ taskCards, config, skin }: BottomDockProps)
                   color: '#000',
                   fontWeight: 800,
                   fontSize: 11,
-                  cursor: 'pointer',
+                  cursor: isMatching ? 'not-allowed' : 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: 4,
                   fontFamily: "'Rajdhani', sans-serif",
                   boxShadow: `0 0 12px rgba(${config.accentRgb},0.35)`,
+                  opacity: isMatching ? 0.7 : 1,
                 }}
               >
                 <Swords size={10} />
-                发起组队
+                {isMatching ? '匹配中...' : '发起组队'}
               </motion.button>
               <motion.button
                 whileHover={{ scale: 1.03 }}
@@ -350,6 +445,297 @@ export default function BottomDock({ taskCards, config, skin }: BottomDockProps)
           </div>
         </div>
       </div>
+
+      {/* 匹配弹窗 */}
+      <AnimatePresence>
+        {showMatchModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'rgba(0,0,0,0.7)',
+              backdropFilter: 'blur(8px)',
+              zIndex: 100,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 20,
+            }}
+            onClick={handleCloseModal}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              style={{
+                width: '100%',
+                maxWidth: 420,
+                background: config.panelBg,
+                border: `1px solid ${config.panelBorder}`,
+                borderRadius: 20,
+                overflow: 'hidden',
+                boxShadow: `0 0 40px rgba(${config.accentRgb},0.2)`,
+              }}
+              onClick={e => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div style={{
+                padding: '20px 24px',
+                borderBottom: `1px solid ${config.panelBorder}`,
+                background: `linear-gradient(135deg, rgba(${config.accentRgb},0.15), rgba(${config.accentRgb},0.05))`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}>
+                <div>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: config.textPrimary }}>
+                    {matchComplete ? '✅ 匹配成功！' : '🎮 正在匹配队友...'}
+                  </div>
+                  <div style={{ fontSize: 11, color: config.textSecondary, marginTop: 4 }}>
+                    {matchComplete ? '已为您找到合适的队友' : '系统正在为您寻找合适的队友'}
+                  </div>
+                </div>
+                {!isMatching && (
+                  <button
+                    onClick={handleCloseModal}
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 8,
+                      background: 'transparent',
+                      border: `1px solid ${config.panelBorder}`,
+                      color: config.textSecondary,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <X size={16} />
+                  </button>
+                )}
+              </div>
+
+              {/* Content */}
+              <div style={{ padding: 24 }}>
+                {/* 进度条 */}
+                {!matchComplete && (
+                  <div style={{ marginBottom: 24 }}>
+                    <div style={{
+                      height: 6,
+                      borderRadius: 3,
+                      background: 'rgba(255,255,255,0.1)',
+                      overflow: 'hidden',
+                    }}>
+                      <motion.div
+                        style={{
+                          height: '100%',
+                          borderRadius: 3,
+                          background: `linear-gradient(90deg, ${config.gradientFrom}, ${config.gradientTo})`,
+                        }}
+                        animate={{ width: `${matchProgress}%` }}
+                        transition={{ duration: 0.1 }}
+                      />
+                    </div>
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      marginTop: 8,
+                      fontSize: 11,
+                      color: config.textSecondary,
+                    }}>
+                      <span>正在搜索...</span>
+                      <span style={{ color: config.accent, fontFamily: "'Orbitron', sans-serif" }}>{matchProgress}%</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* 队友列表 */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {/* 自己 */}
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: '12px 16px',
+                    borderRadius: 12,
+                    background: `rgba(${config.accentRgb},0.1)`,
+                    border: `1px solid ${config.panelBorder}`,
+                  }}>
+                    <div style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: '50%',
+                      background: `linear-gradient(135deg, ${config.gradientFrom}40, ${config.gradientTo}40)`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: 20,
+                      border: `2px solid ${config.accent}`,
+                    }}>
+                      🧑‍💼
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: config.textPrimary }}>陈美琳 (我)</div>
+                      <div style={{ fontSize: 10, color: config.accent }}>中级经理 · Lv.12</div>
+                    </div>
+                    <div style={{
+                      padding: '4px 10px',
+                      borderRadius: 8,
+                      background: `rgba(${config.accentRgb},0.2)`,
+                      color: config.accent,
+                      fontSize: 10,
+                      fontWeight: 700,
+                    }}>
+                      队长
+                    </div>
+                  </div>
+
+                  {/* 匹配的队友 */}
+                  {matchedTeammates.map((teammate, index) => (
+                    <motion.div
+                      key={teammate.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.2 }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 12,
+                        padding: '12px 16px',
+                        borderRadius: 12,
+                        background: `rgba(${config.accentRgb},0.05)`,
+                        border: `1px solid ${config.panelBorder}`,
+                      }}
+                    >
+                      <div style={{
+                        width: 44,
+                        height: 44,
+                        borderRadius: '50%',
+                        background: `rgba(${config.accentRgb},0.1)`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: 20,
+                        border: `1px solid ${config.panelBorder}`,
+                      }}>
+                        {teammate.avatar}
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: config.textPrimary }}>{teammate.name}</div>
+                        <div style={{ fontSize: 10, color: config.textSecondary }}>{teammate.level}</div>
+                      </div>
+                      <div style={{
+                        padding: '4px 10px',
+                        borderRadius: 8,
+                        background: 'rgba(34,197,94,0.15)',
+                        color: '#22c55e',
+                        fontSize: 10,
+                        fontWeight: 700,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 4,
+                      }}>
+                        <CheckCircle2 size={10} />
+                        已就绪
+                      </div>
+                    </motion.div>
+                  ))}
+
+                  {/* 占位符 */}
+                  {!matchComplete && [1, 2].map((i) => (
+                    <div
+                      key={i}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 12,
+                        padding: '12px 16px',
+                        borderRadius: 12,
+                        background: 'rgba(107,114,128,0.05)',
+                        border: `1px dashed ${config.panelBorder}`,
+                        opacity: 0.5,
+                      }}
+                    >
+                      <div style={{
+                        width: 44,
+                        height: 44,
+                        borderRadius: '50%',
+                        background: 'rgba(107,114,128,0.1)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}>
+                        <User size={20} style={{ color: config.textSecondary }} />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 13, color: config.textSecondary }}>等待加入...</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div style={{
+                padding: '16px 24px',
+                borderTop: `1px solid ${config.panelBorder}`,
+                display: 'flex',
+                gap: 12,
+              }}>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleCloseModal}
+                  style={{
+                    flex: 1,
+                    padding: '10px 20px',
+                    borderRadius: 10,
+                    background: 'transparent',
+                    border: `1px solid ${config.panelBorder}`,
+                    color: config.textSecondary,
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    fontFamily: "'Rajdhani', sans-serif",
+                  }}
+                >
+                  取消
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: matchComplete ? 1.02 : 1 }}
+                  whileTap={{ scale: matchComplete ? 0.98 : 1 }}
+                  onClick={handleStartBattle}
+                  disabled={!matchComplete}
+                  style={{
+                    flex: 2,
+                    padding: '10px 20px',
+                    borderRadius: 10,
+                    background: matchComplete
+                      ? `linear-gradient(135deg, ${config.gradientFrom}, ${config.gradientTo})`
+                      : 'rgba(107,114,128,0.2)',
+                    border: 'none',
+                    color: matchComplete ? '#000' : config.textSecondary,
+                    fontSize: 12,
+                    fontWeight: 800,
+                    cursor: matchComplete ? 'pointer' : 'not-allowed',
+                    fontFamily: "'Rajdhani', sans-serif",
+                    boxShadow: matchComplete ? `0 0 16px rgba(${config.accentRgb},0.4)` : 'none',
+                  }}
+                >
+                  {matchComplete ? '开始组队训练 →' : '等待匹配完成...'}
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }

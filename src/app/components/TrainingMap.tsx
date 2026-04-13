@@ -2,6 +2,7 @@ import type { Building, EventAlert, SkinConfig, Skin } from '../types/game';
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Star, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
+import { useNavigate } from 'react-router';
 import BuildingModal from './BuildingModal';
 
 interface TrainingMapProps {
@@ -209,9 +210,11 @@ function BuildingNode({ building, config, onClick }: BuildingNodeProps) {
 interface EventMarkerProps {
   event: EventAlert;
   config: SkinConfig;
+  skin: Skin;
+  onEnterTraining: () => void;
 }
 
-function EventMarker({ event, config }: EventMarkerProps) {
+function EventMarker({ event, config, skin, onEnterTraining }: EventMarkerProps) {
   const [expanded, setExpanded] = useState(false);
   const isUrgent = event.deadline === '立即处理';
 
@@ -276,7 +279,7 @@ function EventMarker({ event, config }: EventMarkerProps) {
             <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#ef4444', animation: 'event-pulse 1s infinite' }} />
             <span style={{ color: '#fca5a5', fontSize: 10 }}>{event.deadline}</span>
           </div>
-          <button style={{
+          <button onClick={() => { setExpanded(false); onEnterTraining(); }} style={{
             marginTop: 8,
             width: '100%',
             padding: '4px 0',
@@ -300,6 +303,12 @@ function EventMarker({ event, config }: EventMarkerProps) {
 export default function TrainingMap({ buildings, events, config, skin }: TrainingMapProps) {
   const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(null);
   const [zoom, setZoom] = useState(1);
+  const navigate = useNavigate();
+
+  const handleEventTraining = () => {
+    const eventId = skin === 'finance' ? 'card-3' : 'card-3';
+    navigate(`/training/${eventId}?skin=${skin}`);
+  };
 
   // Generate SVG path connections
   const connections = buildings.slice(0, -1).map((b, i) => {
@@ -457,7 +466,7 @@ export default function TrainingMap({ buildings, events, config, skin }: Trainin
 
           {/* Event markers */}
           {events.map(event => (
-            <EventMarker key={event.id} event={event} config={config} />
+            <EventMarker key={event.id} event={event} config={config} skin={skin} onEnterTraining={handleEventTraining} />
           ))}
         </div>
 
